@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <groupId>org.geomesa.community</groupId>
+    <artifactId>geomesa-blobstore_2.11</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>GeoMesa Blobstore Parent</name>
+
+    <packaging>pom</packaging>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>geomesa-blobstore-accumulo</module>
+        <module>geomesa-blobstore-api</module>
+        <module>geomesa-blobstore-gs-plugin</module>
+        <module>geomesa-blobstore-handlers</module>
+        <module>geomesa-blobstore-web</module>
+    </modules>
+
+    <properties>
+        <geomesa.version>3.0.0-SNAPSHOT</geomesa.version>
+        <gdal.version>2.0.0</gdal.version>
+        <gt.version>23.0</gt.version>
+        <jts.version>1.16.0</jts.version>
+
+        <scala.version>2.11.7</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
+
+        <slf4j.version>1.7.25</slf4j.version> <!-- 1.7.x is for hadoop 2 and accumulo 1.5.x -->
+        <scalalogging.version>3.8.0</scalalogging.version>
+        <log4j.version>1.2.17</log4j.version>
+
+        <test.fork.count>1</test.fork.count>
+        <test.fork.reuse>true</test.fork.reuse>
+        <test.enable.assertions>true</test.enable.assertions>
+        <maven.test.jvmargs>-Xms512m -Xmx4g -XX:-UseGCOverheadLimit</maven.test.jvmargs>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- this scope:import injects the ENTIRE dependencyManagement
+                 section from the main GeoMesa POM... -->
+            <dependency>
+                <groupId>org.locationtech.geomesa</groupId>
+                <artifactId>geomesa_2.11</artifactId>
+                <version>${geomesa.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+         </dependencies> 
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <!-- 3.8.0 was released 2018-07-26. -->
+                    <version>3.8.0</version>
+                    <configuration>
+                        <!-- Turn off 'useIncrementalCompilation' to keep this plugin
+                             from recompiling Java files that the scala-maven-plugin
+                             already compiled.  The scala-maven-plugin generates .class
+                             files from Java sources when its 'incremental' option is
+                             turned on (as it is in the 'zinc' profile).  In this case,
+                             maven-compiler-plugin 3.0 to current (3.8.0) erroneously
+                             detects changes and re-compiles the Java files unless this
+                             option is turned off.  -->
+                        <useIncrementalCompilation>false</useIncrementalCompilation>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <!-- 3.1.0 was released 2018-04-14. -->
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <!-- 3.1.0 was released 2018-04-23. -->
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <!-- 3.1.0 was released 2018-04-06. -->
+                    <version>3.1.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <!-- 3.0.0-M1 was released 2018-09-23. -->
+                    <version>3.0.0-M1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <!-- 3.1.1 was released 2018-05-19. -->
+                    <version>3.1.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <!-- 3.1.0 was released 2017-08-13. -->
+                    <version>3.1.0</version>
+                    <configuration>
+                        <tarLongFileMode>posix</tarLongFileMode>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <!-- 3.2.1 was released 2018-11-12. -->
+                    <version>3.2.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <!-- 3.4.4 was released 2018-11-01.  It requires Maven version >= 3.3.9. -->
+                    <version>3.4.4</version>
+                    <configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.scala-lang</groupId>
+                                <artifactId>scala-reflect</artifactId>
+                                <version>${scala.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <jvmArgs>
+                            <jvmArg>-Xms1024m</jvmArg>
+                            <jvmArg>-Xmx8G</jvmArg>
+                            <jvmArg>-Duser.timezone=UTC</jvmArg>
+                            <jvmArg>-Djava.awt.headless=true</jvmArg>
+                        </jvmArgs>
+                        <args>
+                            <arg>-nowarn</arg>
+                            <arg>-unchecked</arg>
+                            <arg>-deprecation</arg>
+                        </args>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                        <scalaVersion>${scala.version}</scalaVersion>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <!-- 3.0.0-M4 was released 2019-11-13 -->
+                    <version>3.0.0-M4</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.surefire</groupId>
+                            <artifactId>surefire-junit4</artifactId>
+                            <version>3.0.0-M4</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <forkCount>${test.fork.count}</forkCount>
+                        <reuseForks>${test.fork.reuse}</reuseForks>
+                        <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
+                        <enableAssertions>${test.enable.assertions}</enableAssertions>
+                        <includes>
+                            <include>**/*Test.java</include>
+                        </includes>
+                        <argLine>${maven.test.jvmargs}</argLine>
+                        <systemPropertyVariables>
+                            <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                            <java.awt.headless>true</java.awt.headless>
+                            <user.timezone>UTC</user.timezone>
+                            <user.language>en</user.language>
+                            <user.region>US</user.region>
+                            <geomesa.scan.ranges.target>500</geomesa.scan.ranges.target>
+                            <geomesa.accumulo.test.tablet.servers>1</geomesa.accumulo.test.tablet.servers>
+                            <geomesa.hbase.test.region.servers>1</geomesa.hbase.test.region.servers>
+                            <java.util.logging.config.file>logging.properties</java.util.logging.config.file>
+                            <org.jboss.logging.provider>slf4j</org.jboss.logging.provider>
+                        </systemPropertyVariables>
+                        <!-- these can interfere with the mini clusters we spin up for unit tests -->
+                        <excludedEnvironmentVariables>HADOOP_HOME,ZOOKEEPER_HOME,ACCUMULO_HOME,HBASE_HOME</excludedEnvironmentVariables>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.0.0-M3</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <testSourceDirectory>src/test/scala</testSourceDirectory>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <!-- 3.0.0-M1 was released 2018-09-23. -->
+                    <version>3.0.0-M1</version>
+                    <configuration>
+                        <deployAtEnd>true</deployAtEnd>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <!-- 3.0.1 was released 2016-06-18. -->
+                    <version>3.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <!-- 3.0.1 was released 2018-05-28. -->
+                    <version>3.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <!-- 3.7.1 was released 2018-04-27. -->
+                    <version>3.7.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <!-- 2.5.3 was released 2015-10-17 and is the latest as of 2018-11-29. -->
+                    <version>2.5.3</version>
+                    <configuration>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>pl.project13.maven</groupId>
+                    <artifactId>git-commit-id-plugin</artifactId>
+                    <version>2.2.5</version>
+                    <configuration>
+                        <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+                        <runOnlyOnce>false</runOnlyOnce>
+                        <verbose>false</verbose>
+                        <dateFormat>yyyy-MM-dd'T'HH:mm:ssZ</dateFormat>
+                        <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                        <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+                        <useNativeGit>true</useNativeGit>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                        <!-- note: don't use includeProperties, it causes non-git properties to be excluded -->
+                        <excludeProperties>
+                            <excludeProperty>^git\.build\.user\.email$</excludeProperty>
+                            <excludeProperty>^git\.build\.host$</excludeProperty>
+                            <excludeProperty>^git\.remote\.origin\.url$</excludeProperty>
+                            <excludeProperty>^git\.commit\.id\.describe-short$</excludeProperty>
+                            <excludeProperty>^git\.commit\.user\.email$</excludeProperty>
+                            <excludeProperty>^git\.commit\.message\.short$</excludeProperty>
+                            <excludeProperty>^git\.commit\.id\.abbrev$</excludeProperty>
+                            <excludeProperty>^git\.build\.user\.name$</excludeProperty>
+                            <excludeProperty>^git\.closest\.tag\.commit\.count$</excludeProperty>
+                            <excludeProperty>^git\.commit\.user\.name$</excludeProperty>
+                        </excludeProperties>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <!-- 3.0.0-M2 was released 2018-06-16. -->
+                    <version>3.0.0-M2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <!-- 3.0.0 was released 2018-01-07. -->
+                    <version>3.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-jdk14</artifactId>
+                            <version>1.7.5</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>jcl-over-slf4j</artifactId>
+                            <version>1.7.5</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <!-- 1.6 was released 2015-01-19 and is the latest as of 2018-11-29. -->
+                    <version>1.6</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                        <!-- uncomment to enable useful error messages for pureconfig development -->
+                        <!--<configuration>
+                            <args>
+                                <arg>-Xmacro-settings:materialize-derivations</arg>
+                            </args>
+                        </configuration>-->
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- running `mvn process-resources -N` will generate a new GeoMesa README.md -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>build</directory>
+                                    <includes>
+                                        <include>README.md</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                            <goal>test-jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>verify-services-newlines</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <failsOnError>true</failsOnError>
+                            <checkstyleRules>
+                                <module name="Checker">
+                                    <module name="NewlineAtEndOfFile" />
+                                </module>
+                            </checkstyleRules>
+                            <excludes>**/*</excludes>
+                            <resourceIncludes>META-INF/services/*</resourceIncludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-versions</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes combine.children="append">
+                                        <exclude>*:*_2.10</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                                <requireProperty>
+                                    <message>property scala.version must be set</message>
+                                    <property>scala.version</property>
+                                    <regexMessage>property scala.version doesn't match expected compiler version (2.11.*)</regexMessage>
+                                    <regex>2.11.*</regex>
+                                </requireProperty>
+                                <requireProperty>
+                                    <message>property scala.binary.version must be set</message>
+                                    <property>scala.binary.version</property>
+                                    <regexMessage>property scala.binary.version doesn't match compiler version</regexMessage>
+                                    <regex>2.11</regex>
+                                </requireProperty>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+    </build>
+
+    <repositories>
+        <!-- include central so that it is searched before our alternate repos -->
+        <repository>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <layout>default</layout>
+            <url>https://repo1.maven.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>eclipse-releases</id>
+            <url>https://repo.eclipse.org/content/groups/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>locationtech-snapshots</id>
+            <url>https://repo.eclipse.org/content/groups/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <!-- geotools -->
+        <repository>
+            <id>osgeo</id>
+            <url>https://repo.osgeo.org/repository/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!-- confluent -->
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
+    </repositories>
+
+</project>
